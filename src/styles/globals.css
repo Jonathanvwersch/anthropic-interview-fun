@@ -3,25 +3,68 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --background-color: #f0f0ea;
+  --button-bg-color: #5644a0;
+  --input-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1), 0 0 20px rgba(0, 0, 0, 0.05),
+    0 1px 5px rgba(0, 0, 0, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+.backdrop-blur {
+  backdrop-filter: blur(10px);
+}
+
+.fade-overlay {
+  background: linear-gradient(to bottom, var(--background-color), transparent);
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background-color: var(--background-color);
+}
+
+.bg-user-bubble {
+  background-color: #dcd5c7;
+}
+
+.bg-bot-bubble {
+  background-color: #ffffff;
+}
+
+.text-bubble {
+  color: #1c1917;
+}
+
+.container {
+  max-width: 768px;
+  width: 100%;
+}
+
+input:focus-visible {
+  outline: none;
+}
+
+@keyframes ellipsis {
+  0% {
+    content: ". ";
+    font-size: 32px;
+  }
+  33% {
+    content: ".. ";
+    font-size: 32px;
+  }
+  66% {
+    content: "... ";
+    font-size: 32px;
+  }
+  100% {
+    content: ". ";
+    font-size: 32px;
+  }
+}
+
+.ellipsis-animation::after {
+  content: "";
+  animation: ellipsis 1s infinite;
+  display: inline-block;
+  width: 1em;
+  text-align: left;
 }

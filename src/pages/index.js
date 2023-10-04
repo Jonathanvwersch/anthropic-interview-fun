@@ -1,118 +1,235 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-
-const inter = Inter({ subsets: ['latin'] })
+// pages/index.js
+import { useState, useRef, useEffect } from "react";
+import "tailwindcss/tailwind.css";
+import Head from "next/head";
 
 export default function Home() {
+  const [chatLog, setChatLog] = useState([]);
+  const [userMessage, setUserMessage] = useState("");
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const textAreaRef = useRef(null);
+
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatLog]);
+
+  useEffect(() => {
+    const textArea = textAreaRef.current;
+    textArea.style.height = "auto";
+    textArea.style.height = `${textArea.scrollHeight}px`;
+  }, [userMessage]);
+
+  const handleSubmit = async (e, _userMessage) => {
+    const message = userMessage || _userMessage;
+
+    if (!message) {
+      return;
+    }
+
+    setUserMessage("");
+
+    setError(false);
+    setLoading(true);
+    e.preventDefault();
+
+    setChatLog([...chatLog, { role: "user", message }]);
+
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message }),
+    });
+
+    if (response.status !== 200) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+
+    const data = await response.json();
+    setChatLog([
+      ...chatLog,
+      { role: "user", message },
+      { role: "bot", message: data.message },
+    ]);
+    setLoading(false);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !loading) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
   return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
+    <div
+      className="min-h-screen flex flex-col items-center pt-4 max-h-screen p-2 m-auto"
+      style={{ maxWidth: "768px" }}
     >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/pages/index.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      <Head>
+        <title>Jonathan Bot</title>
+      </Head>
+      <div
+        className="backdrop-blur container flex-grow overflow-y-auto relative mb-4"
+        style={{ maxHeight: "100vh" }}
+      >
+        <div className="fade-overlay top-0 left-0 w-full h-10 sticky" />
+        <h1 className="m-auto text-center mb-8">
+          Hi, I'm Jonathan Bot. I'm here to tell you why you should hire
+          Jonathan.
+        </h1>
+        {chatLog.map((entry, index) => (
+          <div
+            key={index}
+            className={`flex items-end gap-2 mb-4 ${
+              entry.role === "user" ? "flex-row-reverse" : ""
+            }`}
           >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+            <div
+              className={`flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-black`}
+              style={{
+                minHeight: "32px",
+                maxHeight: "32px",
+                minWidth: "32px",
+                maxWidth: "32px",
+                fontWeight: "bold",
+                backgroundColor: entry.role === "user" ? "#292524" : "white",
+                color: entry.role === "user" ? "white" : "black",
+              }}
+            >
+              {entry.role === "user" ? "?" : "J"}
+            </div>
+            <span
+              className={`break-word px-4 py-2 rounded-lg text-bubble ${
+                entry.role === "user" ? "bg-user-bubble" : "bg-bot-bubble"
+              }`}
+            >
+              {entry.message}
+            </span>
+          </div>
+        ))}
+        {loading && <div className="ellipsis-animation mt-4" />}
+        <div ref={messagesEndRef} />
+      </div>
+      {error && (
+        <div className="bottom-4 mb-4  transform  bg-red-500 text-white px-3 py-1.5 rounded-md shadow-lg w-full text-center">
+          Something went wrong. Please try again. Servers are a bit flaky and
+          not scaled up.
         </div>
+      )}
+
+      <div
+        style={{ minHeight: "40px" }}
+        className="flex mb-4 gap-2 item-center justify-start w-full overflow-x-auto whitespace-nowrap"
+      >
+        <button
+          style={{ backgroundColor: "#CB785C" }}
+          className="px-2 rounded-xl text-white"
+          onClick={(e) => {
+            handleSubmit(e, "Why should we hire him");
+          }}
+        >
+          Why should we hire him
+        </button>
+        <button
+          style={{ backgroundColor: "#CB785C" }}
+          className="p-2 rounded-xl text-white"
+          onClick={(e) => {
+            handleSubmit(e, "What are his skills?");
+          }}
+        >
+          What are his skills?
+        </button>
+        <button
+          style={{ backgroundColor: "#CB785C" }}
+          className="p-2 rounded-xl text-white"
+          onClick={(e) => {
+            handleSubmit(e, "Why is he a good fit for Anthropic?");
+          }}
+        >
+          Why is he a good fit for Anthropic?
+        </button>
       </div>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+      <form
+        onSubmit={handleSubmit}
+        className="container flex-shrink-0 p-4 flex mb-3 bg-white border-t border-gray-200 rounded-xl gap-4 items-center"
+        style={{ boxShadow: "var(--input-shadow)" }}
+      >
+        <textarea
+          ref={textAreaRef}
+          value={userMessage}
+          onKeyPress={handleKeyPress}
+          onChange={(e) => setUserMessage(e.target.value)}
+          className="flex-grow rounded-l bg-white text-black resize-none outline-none"
+          placeholder="Message Jonathan Bot..."
+          rows="1"
+          style={{
+            maxHeight: "18em",
+            overflowY: "auto",
+            height: "fit-content!important",
+          }}
         />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          disabled={!userMessage || loading}
+          type="submit"
+          className="p-2 bg-button-bg-color text-white rounded-lg self-end items-center flex"
+          style={{
+            backgroundColor: "var(--button-bg-color)",
+            height: "32px",
+            width: "32px",
+          }}
         >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+          {loading ? (
+            <svg
+              className="animate-spin h-8 w-8 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 1.042.135 2.052.385 3h1.534c-.14-.476-.219-.974-.219-1.5a6 6 0 016 6v-4z"
+              />
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mx-auto"
+              fill="none"
+              viewBox="0 0 24 24"
+              style={{ transform: "rotate(90deg)" }}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+              />
+            </svg>
+          )}
+        </button>
+      </form>
+    </div>
+  );
 }

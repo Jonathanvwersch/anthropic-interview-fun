@@ -52,6 +52,12 @@ export default function Home() {
     if (response.status !== 200) {
       setError(true);
       setLoading(false);
+      setUserMessage(message);
+      setChatLog((prevState) => {
+        const updatedChatLog = [...prevState];
+        updatedChatLog.splice(-1);
+        return updatedChatLog;
+      });
       return;
     }
 
@@ -84,9 +90,9 @@ export default function Home() {
         style={{ maxHeight: "100vh" }}
       >
         <div className="fade-overlay top-0 left-0 w-full h-10 sticky" />
-        <h1 className="m-auto text-center mb-8">
-          Hi, I'm Jonathan Bot. I'm here to tell you why you should hire
-          Jonathan.
+        <h1 className="m-auto text-center mb-8 mx-5">
+          Hi, I&apos;m Jonathan Bot. I&apos;m here to tell you why you should
+          hire Jonathan.
         </h1>
         {chatLog.map((entry, index) => (
           <div
@@ -123,8 +129,8 @@ export default function Home() {
       </div>
       {error && (
         <div className="bottom-4 mb-4  transform  bg-red-500 text-white px-3 py-1.5 rounded-md shadow-lg w-full text-center">
-          Something went wrong. Please try again. Servers are a bit flaky and
-          not scaled up.
+          Something went wrong. Please try again. Vercel&apos;s free servers
+          timeout quickly.
         </div>
       )}
 
